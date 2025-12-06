@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seeing Double | Josephine x Gabriele</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                    },
+                }
+            }
+        }
+    </script>
+
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #171717; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #444; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555; 
+        }
+        
+        /* Animations */
+        @keyframes fade-in {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slide-up {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .animate-in { animation: fade-in 0.5s ease-out forwards; }
+        .slide-in-from-bottom-4 { animation: slide-up 0.5s ease-out forwards; }
+    </style>
+</head>
+<body class="bg-neutral-900 text-white antialiased">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- ICONS (Inline SVGs to remove external dependency complexity) ---
+        const IconBase = ({ children, className, ...props }) => (
+            <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                width="24" 
+                height="24" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                className={className} 
+                {...props}
+            >
+                {children}
+            </svg>
+        );
+
+        const Wine = (props) => <IconBase {...props}><path d="M8 22h8"/><path d="M7 10h10"/><path d="M12 15v7"/><path d="M12 15a5 5 0 0 0 5-5c0-2-.5-4-2-8H9c-1.5 4-2 6-2 8a5 5 0 0 0 5 5Z"/></IconBase>;
+        const Zap = (props) => <IconBase {...props}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></IconBase>;
+        const Music = (props) => <IconBase {...props}><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></IconBase>;
+        const Headphones = (props) => <IconBase {...props}><path d="M3 14v3a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2Z"/><path d="M15 14v3a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2Z"/><path d="M21 14V9a9 9 0 0 0-9-9 9 9 0 0 0-9 9v5"/></IconBase>;
+        const Wind = (props) => <IconBase {...props}><path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2"/><path d="M9.6 4.6A2 2 0 1 1 11 8H2"/><path d="M12.6 19.4A2 2 0 1 0 14 16H2"/></IconBase>;
+        const Flame = (props) => <IconBase {...props}><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.1.2-2.2.5-3.3.3-1.2 1-2.4 1.7-3.3 0 0-2 1-2.7 3.2Z"/></IconBase>;
+        const Sun = (props) => <IconBase {...props}><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></IconBase>;
+        const Moon = (props) => <IconBase {...props}><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></IconBase>;
+        const Check = (props) => <IconBase {...props}><polyline points="20 6 9 17 4 12"/></IconBase>;
+        const Star = (props) => <IconBase {...props}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></IconBase>;
+        const Wifi = (props) => <IconBase {...props}><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></IconBase>;
+        const Monitor = (props) => <IconBase {...props}><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></IconBase>;
+        const MapPin = (props) => <IconBase {...props}><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></IconBase>;
+        const Divide = (props) => <IconBase {...props}><circle cx="12" cy="6" r="1"/><line x1="5" x2="19" y1="12" y2="12"/><circle cx="12" cy="18" r="1"/></IconBase>;
+        const MoveHorizontal = (props) => <IconBase {...props}><polyline points="18 8 22 12 18 16"/><polyline points="6 8 2 12 6 16"/><line x1="2" x2="22" y1="12" y2="12"/></IconBase>;
+        
+        // --- COMPONENTS ---
+
+        // Shared Logo Component
+        const SeeingDoubleLogo = ({ className = "text-2xl" }) => (
+            <div className={`font-black tracking-tighter uppercase italic relative leading-none ${className}`}>
+                <span className="absolute top-0 left-[2px] text-blue-600 opacity-70 mix-blend-screen" aria-hidden="true">Seeing Double</span>
+                <span className="relative z-10 text-white">Seeing Double</span>
+            </div>
+        );
+
+        // --- HERO SECTION ---
+        const HeroSection = () => {
+        return (
+            <div className="relative h-screen w-full flex flex-col md:flex-row overflow-hidden">
+            {/* Josephine Side (Left) */}
+            <div className="relative w-full md:w-1/2 h-1/2 md:h-full group transition-all duration-700 hover:w-full md:hover:w-[60%] bg-[#E8E6D9] text-[#2C2C2C] flex flex-col justify-center items-center p-8 z-10 overflow-hidden">
+                <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] animate-pulse"></div>
+                <div className="relative z-10 text-center transition-transform duration-500 group-hover:scale-105">
+                <span className="font-serif italic text-2xl md:text-3xl mb-4 block text-[#6B705C]">The Chill</span>
+                <h1 className="font-serif text-6xl md:text-9xl mb-6 tracking-tight opacity-90">Josephine</h1>
+                <div className="h-px w-20 bg-[#6B705C] mx-auto mb-6"></div>
+                <p className="max-w-xs mx-auto text-base md:text-lg font-serif italic opacity-80 leading-relaxed">
+                    "I believe in the power of the pause."
+                </p>
+                </div>
+            </div>
+
+            {/* Gabriele Side (Right) */}
+            <div className="relative w-full md:w-1/2 h-1/2 md:h-full group transition-all duration-700 hover:w-full md:hover:w-[60%] bg-[#0A0A0A] text-white flex flex-col justify-center items-center p-8 z-10 border-t md:border-t-0 md:border-l border-white/10 overflow-hidden">
+                <div className="absolute inset-0 opacity-30 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-900 via-black to-black animate-pulse"></div>
+                <div className="relative z-10 text-center transition-transform duration-500 group-hover:scale-105">
+                <span className="font-sans font-black uppercase tracking-[0.3em] text-blue-500 text-sm md:text-lg mb-4 block shadow-blue-500/50 drop-shadow-lg">The Chaos</span>
+                <h1 className="font-sans font-black text-6xl md:text-9xl mb-6 uppercase italic tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white to-neutral-500">Gabriele</h1>
+                <div className="h-1 w-20 bg-blue-600 mx-auto mb-6 transform -skew-x-12"></div>
+                <p className="max-w-xs mx-auto text-base md:text-lg font-bold opacity-80 text-blue-100 leading-relaxed uppercase tracking-wide">
+                    "I believe in the energy of the moment."
+                </p>
+                </div>
+            </div>
+
+            {/* Center Overlay Text - BLOWN UP */}
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-30 pointer-events-none mix-blend-exclusion text-white w-full text-center">
+                <div className="text-[5rem] md:text-[10rem] font-black uppercase tracking-tighter leading-[0.85] opacity-100 md:opacity-100 transition-all duration-500 scale-100 hover:scale-110 relative">
+                <span className="absolute top-0 left-[4px] text-blue-600 opacity-50 blur-[1px]">Seeing<br/>Double</span>
+                <span className="relative z-10">Seeing<br/>Double</span>
+                </div>
+                <div className="mt-4 md:mt-8 flex items-center justify-center gap-4">
+                    <div className="h-px w-12 bg-white"></div>
+                    <p className="text-xs md:text-sm font-bold uppercase tracking-[0.4em]">Jakarta's First Dual-Experience</p>
+                    <div className="h-px w-12 bg-white"></div>
+                </div>
+            </div>
+            </div>
+        );
+        };
+
+        // --- FOUNDERS SECTION ---
+        const FoundersSection = () => {
+        return (
+            <section id="founders" className="py-24 px-4 md:px-12 bg-neutral-900 relative">
+            <div className="max-w-7xl mx-auto">
+                <div className="text-center mb-20">
+                <h2 className="text-4xl md:text-7xl font-bold mb-6 tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-neutral-200 to-neutral-500">Meet the Duality</h2>
+                <p className="text-neutral-400 text-lg md:text-xl max-w-2xl mx-auto">Two Sisters. Two Speeds. The balance behind the brand.</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-0 shadow-2xl">
+                {/* Josephine Card */}
+                <div className="bg-[#E8E6D9] text-[#2C2C2C] p-10 md:p-16 relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-white/40 to-transparent rounded-bl-full transition-transform duration-700 group-hover:scale-150"></div>
+                    <div className="absolute bottom-4 left-4 text-[#6B705C] opacity-10 group-hover:opacity-20 transition-opacity duration-500">
+                    <Sun size={200} />
+                    </div>
+                    
+                    <div className="relative z-10">
+                    <div className="flex items-center gap-4 mb-6">
+                        <div className="w-12 h-12 rounded-full border border-[#6B705C] flex items-center justify-center">
+                            <span className="font-serif italic text-xl">J</span>
+                        </div>
+                        <div>
+                            <h3 className="font-serif text-4xl leading-none">Josephine</h3>
+                            <p className="font-serif italic text-sm text-[#6B705C]">The Curator</p>
+                        </div>
+                    </div>
+                    
+                    <p className="font-serif text-xl leading-relaxed mb-10 text-[#4A4A4A]">
+                        "For me, an event isn't about how loud the music is, but how deep the connection goes. I bring the curated playlists, the natural wines, and the details you only notice when you slow down."
+                    </p>
+                    
+                    <div className="grid grid-cols-1 gap-6">
+                        <div className="border-l-2 border-[#6B705C] pl-6">
+                            <h4 className="font-bold text-xs uppercase tracking-widest mb-1 text-[#6B705C]">The Vibe</h4>
+                            <p className="font-serif text-lg">Sunset in Cipete, acoustic sets, film photography.</p>
+                        </div>
+                        <div className="border-l-2 border-[#6B705C] pl-6">
+                            <h4 className="font-bold text-xs uppercase tracking-widest mb-1 text-[#6B705C]">The Promise</h4>
+                            <p className="font-serif text-lg italic">"I will make sure you feel at home."</p>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+
+                {/* Gabriele Card */}
+                <div className="bg-black text-white p-10 md:p-16 relative overflow-hidden group border-t md:border-t-0 md:border-l border-white/10">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-blue-900/40 to-transparent rounded-bl-full transition-transform duration-700 group-hover:scale-150"></div>
+                    <div className="absolute bottom-4 right-4 text-blue-600 opacity-20 group-hover:opacity-30 transition-opacity duration-500 transform rotate-12">
+                    <Zap size={200} />
+                    </div>
+
+                    <div className="relative z-10">
+                    <div className="flex items-center gap-4 mb-6">
+                        <div className="w-12 h-12 rounded-none border border-blue-500 flex items-center justify-center transform -skew-x-12">
+                            <span className="font-sans font-black text-xl italic">G</span>
+                        </div>
+                        <div>
+                            <h3 className="font-sans font-black text-4xl leading-none italic uppercase">Gabriele</h3>
+                            <p className="font-bold text-xs uppercase tracking-widest text-blue-500">The Catalyst</p>
+                        </div>
+                    </div>
+                    
+                    <p className="font-medium text-xl leading-relaxed mb-10 text-neutral-300">
+                        "Jakarta moves fast, and I move faster. I bring the unexpected turns, the high-BPM drops, and the nights that turn into morning stories. I’m here to make sure you never look at your watch."
+                    </p>
+                    
+                    <div className="grid grid-cols-1 gap-6">
+                        <div className="border-l-4 border-blue-600 pl-6">
+                            <h4 className="font-black text-xs uppercase tracking-widest mb-1 text-blue-500">The Vibe</h4>
+                            <p className="font-bold text-lg">Midnight in Senopati, neon lights, spontaneous trips.</p>
+                        </div>
+                        <div className="border-l-4 border-blue-600 pl-6">
+                            <h4 className="font-black text-xs uppercase tracking-widest mb-1 text-blue-500">The Promise</h4>
+                            <p className="font-bold text-lg italic text-blue-100">"I will make sure you never get bored."</p>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+                </div>
+            </div>
+            </section>
+        );
+        };
+
+        // --- MIRROR EFFECT SECTION ---
+        const MirrorSection = () => {
+        return (
+            <section id="mirror" className="py-32 bg-neutral-950 relative overflow-hidden">
+            {/* Ambient Background Lights */}
+            <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-900/20 rounded-full blur-[128px]"></div>
+            <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-[#E8E6D9]/10 rounded-full blur-[128px]"></div>
+
+            <div className="max-w-7xl mx-auto px-6 relative z-10">
+                
+                {/* Mirror Title Block */}
+                <div className="text-center mb-24 relative">
+                <h2 className="text-5xl md:text-8xl font-black uppercase tracking-tighter text-white relative z-10 leading-none">
+                    The Mirror Effect
+                </h2>
+                {/* Reflection Effect */}
+                <h2 className="text-5xl md:text-8xl font-black uppercase tracking-tighter text-white/10 absolute top-full left-0 right-0 transform -scale-y-100 origin-top blur-sm leading-none">
+                    The Mirror Effect
+                </h2>
+                <p className="mt-8 text-xl text-neutral-400 font-light tracking-widest uppercase">
+                    Two Perspectives. <span className="text-white font-bold">One Vision.</span>
+                </p>
+                </div>
+
+                {/* The Binary Experience Cards */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-16">
+                    
+                    {/* Format A: The Split */}
+                    <div className="group relative p-1 rounded-3xl bg-gradient-to-br from-white/10 to-transparent hover:from-white/20 transition-all duration-500">
+                        <div className="bg-black/80 backdrop-blur-xl rounded-[22px] p-8 md:p-12 h-full border border-white/5 relative overflow-hidden flex flex-col">
+                            <div className="absolute top-0 right-0 p-8 opacity-20 group-hover:opacity-50 transition-opacity">
+                                <Divide size={80} className="text-white" />
+                            </div>
+                            
+                            <div className="relative z-10 mb-10">
+                                <span className="text-blue-500 font-bold uppercase tracking-widest text-xs mb-4 block">Format A</span>
+                                <h3 className="text-3xl md:text-4xl font-bold text-white mb-6">The Split</h3>
+                                <p className="text-neutral-400 leading-relaxed text-lg">
+                                    <span className="text-white font-bold">The Architecture of Choice.</span><br/>
+                                    We don't just divide a room; we sever the atmosphere. A single soundproof membrane stands between total zen and absolute mayhem. 
+                                    To your left, time stops. To your right, it accelerates. 
+                                    Cross the threshold and feel your heartbeat recalibrate instantly.
+                                </p>
+                            </div>
+
+                            {/* Visual for Split - The Frequency Divide */}
+                            <div className="w-full aspect-[16/9] rounded-xl relative overflow-hidden mt-auto shadow-2xl group-hover:shadow-white/5 transition-shadow bg-[#111] border border-white/10">
+                                {/* Background Gradients */}
+                                <div className="absolute inset-0 flex">
+                                    <div className="w-1/2 bg-gradient-to-r from-[#E8E6D9]/10 to-transparent"></div>
+                                    <div className="w-1/2 bg-gradient-to-l from-blue-900/30 to-transparent"></div>
+                                </div>
+
+                                {/* Central Divider */}
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                    <div className="h-full w-2 bg-white/10 backdrop-blur-md border-x border-white/20 shadow-[0_0_30px_rgba(255,255,255,0.2)]"></div>
+                                </div>
+
+                                {/* The Waveforms Visual */}
+                                <div className="absolute inset-0 flex items-center justify-center px-8">
+                                    {/* Left Side: Smooth Wave (Josephine) */}
+                                    <div className="flex-1 flex gap-1 justify-end pr-4 h-12 items-center">
+                                        {[...Array(8)].map((_, i) => (
+                                            <div key={`chill-${i}`} className="w-2 rounded-full bg-[#E8E6D9] animate-pulse opacity-60" 
+                                                style={{ 
+                                                    height: `${20 + Math.sin(i) * 30}%`, 
+                                                    animationDuration: '3s',
+                                                    animationDelay: `${i * 0.2}s`
+                                                }}></div>
+                                        ))}
+                                    </div>
+
+                                    {/* Center Portal Icon */}
+                                    <div className="relative z-10 bg-black border border-white p-3 rounded-full shadow-[0_0_20px_rgba(255,255,255,0.4)] group-hover:scale-110 transition-transform duration-500 cursor-pointer">
+                                        <MoveHorizontal size={20} className="text-white" />
+                                    </div>
+
+                                    {/* Right Side: Chaotic Wave (Gabriele) */}
+                                    <div className="flex-1 flex gap-1 justify-start pl-4 h-12 items-center">
+                                        {[...Array(8)].map((_, i) => (
+                                            <div key={`chaos-${i}`} className="w-2 rounded-full bg-blue-500 animate-pulse" 
+                                                style={{ 
+                                                    height: `${40 + Math.random() * 60}%`, 
+                                                    animationDuration: '0.2s',
+                                                    animationDelay: `${i * 0.05}s`
+                                                }}></div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Labels */}
+                                <div className="absolute bottom-4 left-4 text-[10px] uppercase tracking-widest text-[#E8E6D9]/50">Zone J</div>
+                                <div className="absolute bottom-4 right-4 text-[10px] uppercase tracking-widest text-blue-500/50">Zone G</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Format B: The Teleport */}
+                    <div className="group relative p-1 rounded-3xl bg-gradient-to-br from-blue-500/20 to-transparent hover:from-blue-500/40 transition-all duration-500">
+                        <div className="bg-black/80 backdrop-blur-xl rounded-[22px] p-8 md:p-12 h-full border border-white/5 relative overflow-hidden flex flex-col">
+                            <div className="absolute top-0 right-0 p-8 opacity-20 group-hover:opacity-50 transition-opacity">
+                                <Monitor size={80} className="text-blue-500" />
+                            </div>
+                            
+                            <div className="relative z-10 mb-10">
+                                <span className="text-[#E8E6D9] font-bold uppercase tracking-widest text-xs mb-4 block">Format B</span>
+                                <h3 className="text-3xl md:text-4xl font-bold text-white mb-6">The Teleport</h3>
+                                <p className="text-neutral-400 leading-relaxed text-lg">
+                                    <span className="text-white font-bold">Social Quantum Entanglement.</span><br/>
+                                    We dissolve the geography of Jakarta. Two venues, distinct and distant, synchronized by a digital umbilical cord. 
+                                    When the signal syncs, the North feels the South's heartbeat. 
+                                    You aren't just at a party; you are part of a city-wide organism.
+                                </p>
+                            </div>
+
+                            {/* Visual for Teleport - The Signal Bridge */}
+                            <div className="w-full aspect-[16/9] rounded-xl bg-[#0a0a0a] border border-neutral-800 relative overflow-hidden flex flex-col mt-auto shadow-2xl">
+                                {/* Network Grid Background */}
+                                <div className="absolute inset-0 opacity-20 bg-[linear-gradient(rgba(59,130,246,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(59,130,246,0.1)_1px,transparent_1px)] bg-[size:20px_20px]"></div>
+
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                    {/* Connection Line */}
+                                    <div className="w-2/3 h-px bg-neutral-700 relative">
+                                        {/* Moving Data Packets */}
+                                        <div className="absolute top-1/2 left-0 w-2 h-2 bg-[#E8E6D9] rounded-full shadow-[0_0_10px_#E8E6D9] animate-[ping_2s_linear_infinite] transform -translate-y-1/2"></div>
+                                        <div className="absolute top-1/2 right-0 w-12 h-1 bg-gradient-to-l from-blue-500 to-transparent transform -translate-y-1/2 animate-[pulse_1s_ease-in-out_infinite]"></div>
+                                    </div>
+                                </div>
+
+                                {/* Nodes */}
+                                <div className="absolute inset-0 flex items-center justify-between px-12 md:px-20">
+                                    {/* Node A */}
+                                    <div className="relative z-10 flex flex-col items-center gap-4 group-hover:-translate-y-2 transition-transform duration-500">
+                                        <div className="w-16 h-16 rounded-xl border border-[#E8E6D9]/30 bg-[#E8E6D9]/5 backdrop-blur-sm flex items-center justify-center shadow-[0_0_30px_rgba(232,230,217,0.1)] relative overflow-hidden">
+                                            <MapPin size={24} className="text-[#E8E6D9]" />
+                                            <div className="absolute bottom-0 left-0 w-full h-1 bg-[#E8E6D9] animate-pulse"></div>
+                                        </div>
+                                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-[#E8E6D9]">Senopati</span>
+                                    </div>
+
+                                    {/* Node B */}
+                                    <div className="relative z-10 flex flex-col items-center gap-4 group-hover:-translate-y-2 transition-transform duration-500 delay-100">
+                                        <div className="w-16 h-16 rounded-xl border border-blue-500/30 bg-blue-500/5 backdrop-blur-sm flex items-center justify-center shadow-[0_0_30px_rgba(59,130,246,0.2)] relative overflow-hidden">
+                                            <MapPin size={24} className="text-blue-500" />
+                                            <div className="absolute bottom-0 left-0 w-full h-1 bg-blue-500 animate-pulse"></div>
+                                        </div>
+                                        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-blue-500">PIK</span>
+                                    </div>
+                                </div>
+
+                                {/* Central Sync Status */}
+                                <div className="absolute top-4 left-0 w-full text-center">
+                                    <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-500/10 border border-green-500/20 text-[8px] uppercase tracking-widest text-green-400">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
+                                        Latency: 0.04ms
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="mt-20 text-center">
+                    <p className="text-sm md:text-base font-bold uppercase tracking-[0.2em] text-neutral-500">
+                        We never do just one thing. We sell the contrast.
+                    </p>
+                </div>
+
+            </div>
+            </section>
+        );
+        };
+
+        // --- QUIZ SECTION ---
+        const QuizSection = () => {
+        const [currentStep, setCurrentStep] = useState(0);
+        const [scores, setScores] = useState({ josephine: 0, gabriele: 0 });
+        const [email, setEmail] = useState('');
+        const [submitted, setSubmitted] = useState(false);
+
+        const questions = [
+            {
+            title: "The Friday Night Call",
+            description: "It's 8 PM. Where are we heading?",
+            optionA: { label: "Josephine", text: "A private room at a jazz bar, a bottle of red, and 3 close friends.", type: 'josephine', icon: Wine },
+            optionB: { label: "Gabriele", text: "A table at the newest club, a bottle of tequila, and whoever shows up.", type: 'gabriele', icon: Music }
+            },
+            {
+            title: "The Jakarta Commute",
+            description: "Stuck in traffic on Sudirman. What's the mood?",
+            optionA: { label: "Josephine", text: "Headphones on, listening to a podcast, watching the rain against the window.", type: 'josephine', icon: Headphones },
+            optionB: { label: "Gabriele", text: "Group chat blowing up, planning the pre-drinks, blasting the hype playlist.", type: 'gabriele', icon: Zap }
+            },
+            {
+            title: "The Aesthetic",
+            description: "Your ideal space looks like...",
+            optionA: { label: "Josephine", text: "Earth tones, linen, candles, scent of sandalwood.", type: 'josephine', icon: Wind },
+            optionB: { label: "Gabriele", text: "Chrome, leather, strobes, scent of smoke and citrus.", type: 'gabriele', icon: Flame }
+            }
+        ];
+
+        const handleAnswer = (type) => {
+            setScores(prev => ({ ...prev, [type]: prev[type] + 1 }));
+            setCurrentStep(prev => prev + 1);
+        };
+
+        const handleEmailSubmit = (e) => {
+            e.preventDefault();
+            setSubmitted(true);
+            // In a real app, send data to backend here
+        };
+
+        const winner = scores.josephine > scores.gabriele ? 'Josephine' : 'Gabriele';
+
+        return (
+            <section id="quiz" className="py-24 bg-neutral-900 border-t border-neutral-800 scroll-mt-20">
+            <div className="max-w-6xl mx-auto px-6">
+                <div className="text-center mb-16">
+                <span className="text-blue-500 font-bold tracking-widest text-xs uppercase mb-2 block">Step Into The World</span>
+                <h2 className="text-5xl md:text-7xl font-bold mb-4 text-white">Define Your Dual Identity</h2>
+                <p className="text-neutral-400 text-lg">Which Sister Are You? The result unlocks your invitation.</p>
+                </div>
+
+                <div className="bg-neutral-800 rounded-3xl overflow-hidden shadow-2xl border border-neutral-700 min-h-[600px] flex flex-col relative">
+                    {/* Background Texture */}
+                    <div className="absolute inset-0 opacity-5 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')]"></div>
+                    
+                {currentStep < 3 ? (
+                    <div className="flex-1 flex flex-col relative z-10">
+                    {/* Progress Bar */}
+                    <div className="w-full h-1 bg-neutral-900">
+                        <div 
+                        className="h-full bg-blue-500 transition-all duration-500 ease-out"
+                        style={{ width: `${((currentStep) / 3) * 100}%` }}
+                        ></div>
+                    </div>
+
+                    <div className="flex-1 flex flex-col items-center justify-center p-8 md:p-16 text-center">
+                        <div className="mb-8">
+                            <span className="text-xs font-bold uppercase tracking-[0.3em] text-neutral-500">Question {currentStep + 1} / 3</span>
+                        </div>
+                        
+                        <h2 className="text-3xl md:text-5xl font-bold mb-6 text-white">{questions[currentStep].title}</h2>
+                        <p className="text-neutral-400 mb-16 text-xl">{questions[currentStep].description}</p>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl">
+                        {/* Option A (Josephine) */}
+                        <button 
+                            onClick={() => handleAnswer('josephine')}
+                            className="group relative bg-[#E8E6D9] text-[#2C2C2C] p-10 rounded-2xl text-left hover:scale-[1.02] transition-all duration-300 shadow-lg hover:shadow-[#E8E6D9]/20"
+                        >
+                            <div className="absolute top-6 right-6 text-[#6B705C] opacity-50 group-hover:opacity-100 transition-opacity transform group-hover:rotate-12">
+                            {React.createElement(questions[currentStep].optionA.icon, { size: 32 })}
+                            </div>
+                            <span className="font-serif italic text-sm uppercase tracking-widest text-[#6B705C] mb-4 block">Team Josephine</span>
+                            <p className="font-serif text-2xl leading-tight">{questions[currentStep].optionA.text}</p>
+                        </button>
+
+                        {/* Option B (Gabriele) */}
+                        <button 
+                            onClick={() => handleAnswer('gabriele')}
+                            className="group relative bg-black border border-neutral-700 text-white p-10 rounded-2xl text-left hover:scale-[1.02] transition-all duration-300 hover:border-blue-500 shadow-lg hover:shadow-blue-500/20"
+                        >
+                            <div className="absolute top-6 right-6 text-blue-500 opacity-50 group-hover:opacity-100 transition-opacity transform group-hover:-rotate-12">
+                            {React.createElement(questions[currentStep].optionB.icon, { size: 32 })}
+                            </div>
+                            <span className="font-sans font-black text-sm uppercase tracking-widest text-blue-500 mb-4 block">Team Gabriele</span>
+                            <p className="font-sans font-bold text-2xl leading-tight italic">{questions[currentStep].optionB.text}</p>
+                        </button>
+                        </div>
+                    </div>
+                    </div>
+                ) : (
+                    // RESULTS SCREEN - "UNFORGETTABLE EXPERIENCE"
+                    <div className="flex-1 flex flex-col md:flex-row h-full relative z-10">
+                    
+                    {/* Luxury Card Visual */}
+                    <div className="w-full md:w-5/12 p-8 md:p-16 flex flex-col justify-center items-center relative overflow-hidden bg-[#111] border-r border-white/5">
+                        <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/dark-leather.png')]"></div>
+                        
+                        {/* THE CARD */}
+                        <div className={`relative w-full aspect-[1.586/1] rounded-2xl p-6 md:p-8 shadow-2xl overflow-hidden transition-all duration-500 hover:scale-105 hover:shadow-2xl group ${
+                            winner === 'Josephine' 
+                            ? 'bg-gradient-to-br from-[#F5F5F0] via-[#E6E4D5] to-[#CccbBa] text-[#4A483F] border border-[#D4D1C3] shadow-[0_20px_50px_-12px_rgba(230,228,213,0.3)]' 
+                            : 'bg-gradient-to-br from-[#1a1a1a] via-[#0a0a0a] to-black text-white border border-white/10 shadow-[0_20px_50px_-12px_rgba(59,130,246,0.3)]'
+                        }`}>
+                            {/* Metallic Shine Effect */}
+                            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none transform -translate-x-full group-hover:translate-x-full ease-in-out"></div>
+                            
+                            {/* Texture Overlay */}
+                            <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/noise.png')]"></div>
+
+                            {/* Top Row */}
+                            <div className="flex justify-between items-start mb-6 md:mb-8 relative z-10">
+                                <div className="flex items-center gap-3">
+                                {/* Luxury Chip */}
+                                <div className={`w-12 h-9 rounded-md bg-gradient-to-br ${winner === 'Josephine' ? 'from-yellow-100 via-yellow-300 to-yellow-500' : 'from-gray-300 via-gray-100 to-gray-400'} flex items-center justify-center border border-black/10 shadow-inner`}>
+                                    <div className="w-8 h-5 border border-black/20 rounded-sm grid grid-cols-2 gap-px opacity-50 mix-blend-multiply">
+                                        <div className="border-r border-black/20"></div>
+                                        <div></div>
+                                    </div>
+                                </div>
+                                <Wifi className={`w-6 h-6 rotate-90 opacity-60 ${winner === 'Josephine' ? 'text-[#4A483F]' : 'text-white'}`} />
+                                </div>
+                                <div className="font-bold tracking-[0.2em] uppercase text-[10px] md:text-xs opacity-80">
+                                    Seeing Double
+                                </div>
+                            </div>
+
+                            {/* Middle - Name */}
+                            <div className="mt-auto mb-4 relative z-10">
+                                <div className="text-[8px] md:text-[10px] uppercase tracking-[0.2em] opacity-60 mb-1">Identity</div>
+                                <h2 className={`text-xl md:text-3xl tracking-widest uppercase truncate ${winner === 'Josephine' ? 'font-serif drop-shadow-sm' : 'font-sans font-black italic text-transparent bg-clip-text bg-gradient-to-r from-white via-blue-200 to-blue-500'}`}>
+                                    {winner}
+                                </h2>
+                            </div>
+
+                            {/* Bottom - Numbers */}
+                            <div className="flex justify-between items-end relative z-10">
+                                <div className={`font-mono text-xs md:text-base tracking-[0.15em] opacity-80 shadow-black drop-shadow-md`}>
+                                    0000 8842 2025 {winner === 'Josephine' ? '0001' : '0002'}
+                                </div>
+                                <div className="flex flex-col items-end">
+                                    <span className="text-[6px] md:text-[8px] uppercase tracking-widest opacity-60">Valid Thru</span>
+                                    <span className="font-mono text-[10px] md:text-xs font-bold">FOREVER</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <p className="mt-8 text-xs text-neutral-500 uppercase tracking-widest font-mono">
+                            {winner === 'Josephine' ? 'The Pearl Card' : 'The Obsidian Card'}
+                        </p>
+                    </div>
+
+                    {/* Action Form */}
+                    <div className="w-full md:w-7/12 p-12 md:p-20 bg-neutral-900 flex flex-col justify-center">
+                        <div className="mb-8">
+                            <h3 className="text-blue-500 font-bold uppercase tracking-widest text-xs mb-2 flex items-center gap-2">
+                                <Star size={12} fill="currentColor" /> Unforgettable Experience Awaits
+                            </h3>
+                            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Secure Your Access</h2>
+                            <p className="text-neutral-400 text-lg leading-relaxed mb-8">
+                                You've been matched with Team {winner}. This isn't just an email list—it's your key to Jakarta's most exclusive dual-reality events.
+                                <span className="block mt-4 text-white font-medium">Warning: Capacity for our pilot event is strictly limited.</span>
+                            </p>
+                        </div>
+                        
+                        {submitted ? (
+                        <div className="p-8 bg-green-500/10 border border-green-500/20 rounded-xl flex items-center gap-4 animate-in fade-in slide-in-from-bottom-4">
+                            <div className="bg-green-500 text-black p-2 rounded-full">
+                                <Check size={24} />
+                            </div>
+                            <div>
+                                <h4 className="text-green-500 font-bold text-lg">You're locked in.</h4>
+                                <p className="text-green-500/80 text-sm">Check your inbox for your digital pass.</p>
+                            </div>
+                        </div>
+                        ) : (
+                        <form onSubmit={handleEmailSubmit} className="w-full">
+                            <div className="flex flex-col gap-4">
+                            <input 
+                                type="email" 
+                                required
+                                placeholder="Enter your email address" 
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                className="w-full bg-neutral-800 border border-neutral-700 text-white p-4 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all placeholder-neutral-500"
+                            />
+                            <button 
+                                type="submit" 
+                                className={`w-full py-5 rounded-xl text-base uppercase font-black tracking-[0.2em] transition-all transform hover:-translate-y-1 hover:shadow-2xl ${
+                                winner === 'Josephine' 
+                                    ? 'bg-[#E8E6D9] text-[#2C2C2C] hover:bg-white' 
+                                    : 'bg-blue-600 text-white hover:bg-blue-500 shadow-blue-900/20'
+                                }`}
+                            >
+                                Claim My Spot
+                            </button>
+                            </div>
+                            <p className="text-xs mt-6 text-center text-neutral-600">
+                            By joining, you agree to receive updates about Seeing Double events. No spam, just vibes.
+                            </p>
+                        </form>
+                        )}
+                    </div>
+                    </div>
+                )}
+                </div>
+            </div>
+            </section>
+        );
+        };
+
+        // --- LEADERBOARD SECTION ---
+        const LeaderboardSection = () => {
+        const [josephineCount, setJosephineCount] = useState(1240);
+        const [gabrieleCount, setGabrieleCount] = useState(1195);
+        
+        useEffect(() => {
+            const interval = setInterval(() => {
+            if (Math.random() > 0.5) setJosephineCount(c => c + 1);
+            else setGabrieleCount(c => c + 1);
+            }, 3000); // Faster updates for more "hype"
+            return () => clearInterval(interval);
+        }, []);
+
+        const total = josephineCount + gabrieleCount;
+        const josephinePercent = (josephineCount / total) * 100;
+
+        return (
+            <section id="leaderboard" className="py-24 bg-black relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20"></div>
+            
+            <div className="max-w-4xl mx-auto px-6 relative z-10 text-center">
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-green-500/30 bg-green-500/10 text-green-400 text-xs font-bold uppercase tracking-widest mb-10 animate-pulse">
+                <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.8)]"></div>
+                Live Community Pulse
+                </div>
+                
+                <h2 className="text-4xl md:text-6xl font-black text-white mb-4 uppercase italic">Who Rules Jakarta?</h2>
+                <p className="text-neutral-400 mb-16 text-lg max-w-2xl mx-auto">The city is divided. Join the winning side to influence the theme of our secret launch party.</p>
+
+                <div className="flex justify-between items-end mb-6 font-mono border-b border-neutral-800 pb-2">
+                <div className="text-left group cursor-default">
+                    <div className="text-[#E8E6D9] text-3xl md:text-5xl font-bold group-hover:scale-110 transition-transform origin-bottom-left">{josephineCount.toLocaleString()}</div>
+                    <div className="text-[#6B705C] text-xs uppercase tracking-[0.2em] mt-2">Team Chill</div>
+                </div>
+                <div className="text-right group cursor-default">
+                    <div className="text-blue-500 text-3xl md:text-5xl font-bold group-hover:scale-110 transition-transform origin-bottom-right">{gabrieleCount.toLocaleString()}</div>
+                    <div className="text-blue-800 text-xs uppercase tracking-[0.2em] mt-2">Team Chaos</div>
+                </div>
+                </div>
+
+                {/* The Bar */}
+                <div className="w-full h-8 md:h-12 bg-neutral-900 rounded-none overflow-hidden flex relative border border-neutral-800">
+                <div 
+                    className="h-full bg-[#E8E6D9] transition-all duration-1000 ease-out flex items-center justify-start px-4 relative"
+                    style={{ width: `${josephinePercent}%` }}
+                >
+                    <span className="text-[#2C2C2C] text-xs font-bold uppercase tracking-widest hidden md:block">Josephine</span>
+                </div>
+                <div 
+                    className="h-full bg-blue-600 transition-all duration-1000 ease-out flex items-center justify-end px-4 relative"
+                    style={{ width: `${100 - josephinePercent}%` }}
+                >
+                    <span className="text-white text-xs font-bold uppercase tracking-widest hidden md:block">Gabriele</span>
+                </div>
+                
+                {/* Center Marker */}
+                <div className="absolute top-0 bottom-0 left-1/2 w-1 bg-black z-10 transform -translate-x-1/2 shadow-[0_0_20px_rgba(0,0,0,1)]"></div>
+                </div>
+                
+                <div className="mt-10 p-6 bg-neutral-900/50 border border-neutral-800 backdrop-blur-sm rounded-xl inline-block">
+                    <p className="text-sm text-neutral-400">
+                        Current Territory: <span className="text-white font-bold uppercase tracking-wide ml-2">{josephineCount > gabrieleCount ? "South Jakarta is Chill" : "South Jakarta is Chaotic"}</span>
+                    </p>
+                </div>
+            </div>
+            </section>
+        );
+        };
+
+        const App = () => {
+        const [activeTab, setActiveTab] = useState('both'); 
+
+        const scrollToQuiz = () => {
+            const element = document.getElementById('quiz');
+            if (element) element.scrollIntoView({ behavior: 'smooth' });
+        };
+
+        return (
+            <div className="min-h-screen bg-neutral-900 text-white font-sans overflow-x-hidden selection:bg-blue-500 selection:text-white">
+            {/* Navigation / Header */}
+            <nav className="fixed top-0 w-full z-50 mix-blend-difference px-6 py-6 flex justify-between items-center backdrop-blur-md bg-black/20 border-b border-white/10">
+                <SeeingDoubleLogo />
+                <div className="hidden md:flex gap-8 text-xs font-bold tracking-[0.2em] uppercase">
+                <a href="#founders" className="hover:text-blue-400 transition-colors">The Sisters</a>
+                <a href="#mirror" className="hover:text-blue-400 transition-colors">The Mirror</a>
+                <a href="#quiz" className="hover:text-blue-400 transition-colors">The Experience</a>
+                <a href="#leaderboard" className="hover:text-blue-400 transition-colors">Leaderboard</a>
+                </div>
+                <button 
+                onClick={scrollToQuiz}
+                className="border border-white px-6 py-2 text-xs font-black uppercase tracking-widest hover:bg-white hover:text-black transition-all hover:scale-105"
+                >
+                Get Access
+                </button>
+            </nav>
+
+            {/* Hero Section - Split Screen */}
+            <HeroSection />
+
+            {/* Founders Section */}
+            <FoundersSection />
+
+            {/* The Mirror Teaser - UPDATED SECTION */}
+            <MirrorSection />
+
+            {/* Interactive Quiz */}
+            <QuizSection />
+
+            {/* Live Counter */}
+            <LeaderboardSection />
+
+            {/* Footer */}
+            <footer className="py-20 px-6 border-t border-neutral-800 text-center text-neutral-500 text-sm bg-black">
+                <p className="uppercase tracking-[0.3em] mb-6 text-xs font-bold text-neutral-600">Josephine x Gabriele Present</p>
+                <div className="flex justify-center mb-8">
+                    <SeeingDoubleLogo className="text-4xl md:text-6xl" />
+                </div>
+                <div className="flex justify-center gap-6 mb-8">
+                    <span className="w-2 h-2 bg-neutral-800 rounded-full"></span>
+                    <span className="w-2 h-2 bg-neutral-800 rounded-full"></span>
+                    <span className="w-2 h-2 bg-neutral-800 rounded-full"></span>
+                </div>
+                <p>© 2025 Seeing Double Jakarta. All Rights Reserved.</p>
+            </footer>
+            </div>
+        );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
